@@ -1,0 +1,534 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>InsurEthiopia — iPhone Demo</title>
+<style>
+  :root {
+    --bg: #0b0c0e;
+    --bg-2: #14161a;
+    --line: rgba(255,255,255,.10);
+    --line-2: rgba(255,255,255,.18);
+    --fg: #e9ecf1;
+    --fg-dim: #8b93a1;
+    --accent: #10b981;
+    --radius: 10px;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    height: 100%;
+    margin: 0;
+  }
+
+  body {
+    background:
+      radial-gradient(1200px 800px at 50% -10%, #1c2026 0%, transparent 60%),
+      linear-gradient(180deg, var(--bg-2) 0%, var(--bg) 100%);
+    color: var(--fg);
+    font: 14px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, sans-serif;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  body.present {
+    background: #000;
+  }
+
+  body.present .bar,
+  body.present .hint {
+    display: none;
+  }
+
+  /* ---------- toolbar ---------- */
+
+  .bar {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--line);
+    background: rgba(10,11,13,.75);
+    backdrop-filter: blur(12px);
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 650;
+    letter-spacing: -.01em;
+    margin-right: 4px;
+  }
+
+  .dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 12px var(--accent);
+  }
+
+  .sep {
+    width: 1px;
+    height: 22px;
+    background: var(--line);
+  }
+
+  label.f {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--fg-dim);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+  }
+
+  select, button, input[type="text"] {
+    font: inherit;
+    color: var(--fg);
+    background: #1b1e24;
+    border: 1px solid var(--line-2);
+    border-radius: var(--radius);
+    padding: 7px 10px;
+    cursor: pointer;
+    transition: background .15s, border-color .15s;
+  }
+
+  select:hover, button:hover { background: #232830; }
+  select:focus-visible, button:focus-visible, input:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+  }
+
+  button.ghost {
+    background: transparent;
+  }
+
+  button.on {
+    background: color-mix(in srgb, var(--accent) 22%, #1b1e24);
+    border-color: color-mix(in srgb, var(--accent) 55%, transparent);
+    color: #d8fff0;
+  }
+
+  .spacer { flex: 1 1 auto; }
+
+  kbd {
+    font: 11px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+    background: #22262e;
+    border: 1px solid var(--line-2);
+    border-bottom-width: 2px;
+    border-radius: 5px;
+    padding: 3px 5px;
+    color: var(--fg-dim);
+  }
+
+  /* ---------- stage ---------- */
+
+  .stage {
+    flex: 1 1 auto;
+    display: grid;
+    place-items: center;
+    min-height: 0;
+    padding: 18px;
+  }
+
+  .scaler {
+    transform-origin: center center;
+    will-change: transform;
+  }
+
+  /* ---------- device ---------- */
+
+  .device {
+    position: relative;
+    padding: var(--bezel);
+    border-radius: calc(var(--screen-radius) + var(--bezel));
+    background: linear-gradient(150deg, #6e727a 0%, #2f333a 18%, #1a1d22 40%, #33373e 62%, #75797f 82%, #23262b 100%);
+    box-shadow:
+      0 0 0 1px rgba(255,255,255,.10),
+      inset 0 0 0 1px rgba(255,255,255,.16),
+      0 40px 80px -20px rgba(0,0,0,.85),
+      0 8px 24px rgba(0,0,0,.6);
+  }
+
+  .screen {
+    position: relative;
+    width: var(--w);
+    height: var(--h);
+    border-radius: var(--screen-radius);
+    overflow: hidden;
+    background: #000;
+    display: flex;
+    flex-direction: column;
+    box-shadow: inset 0 0 0 1px rgba(0,0,0,.9);
+  }
+
+  iframe {
+    flex: 1 1 auto;
+    width: 100%;
+    border: 0;
+    display: block;
+    background: #fff;
+  }
+
+  /* status bar band */
+
+  .statusbar {
+    flex: none;
+    height: var(--status-h);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 28px;
+    font-weight: 600;
+    font-size: 15px;
+    letter-spacing: .01em;
+    position: relative;
+    z-index: 3;
+  }
+
+  .screen[data-chrome="dark"] .statusbar { background: #000; color: #fff; }
+  .screen[data-chrome="light"] .statusbar { background: #fff; color: #000; }
+  .screen[data-chrome="off"] .statusbar,
+  .screen[data-chrome="off"] .homebar { display: none; }
+
+  .statusbar .icons {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .statusbar svg { display: block; }
+
+  /* dynamic island */
+
+  .island {
+    position: absolute;
+    top: 11px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 124px;
+    height: 35px;
+    border-radius: 20px;
+    background: #000;
+    z-index: 4;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.05);
+  }
+
+  .island::after {
+    content: "";
+    position: absolute;
+    right: 11px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 32% 32%, #2b3a4a 0%, #0b1016 70%);
+  }
+
+  .screen[data-island="false"] .island { display: none; }
+
+  /* home indicator */
+
+  .homebar {
+    flex: none;
+    height: var(--home-h);
+    display: grid;
+    place-items: center;
+    position: relative;
+    z-index: 3;
+  }
+
+  .screen[data-chrome="dark"] .homebar { background: #000; }
+  .screen[data-chrome="light"] .homebar { background: #fff; }
+
+  .homebar i {
+    display: block;
+    width: 138px;
+    height: 5px;
+    border-radius: 3px;
+  }
+
+  .screen[data-chrome="dark"] .homebar i { background: rgba(255,255,255,.92); }
+  .screen[data-chrome="light"] .homebar i { background: rgba(0,0,0,.85); }
+
+  .screen[data-home="false"] .homebar { display: none; }
+
+  /* side buttons */
+
+  .btns i {
+    position: absolute;
+    background: linear-gradient(90deg, #4a4e56, #23262c);
+    border-radius: 2px;
+  }
+
+  .btns .silent { left: -2px; top: 108px;  width: 3px; height: 30px; }
+  .btns .up     { left: -2px; top: 158px;  width: 3px; height: 58px; }
+  .btns .down   { left: -2px; top: 228px;  width: 3px; height: 58px; }
+  .btns .power  { right: -2px; top: 190px; width: 3px; height: 88px;
+                  background: linear-gradient(270deg, #4a4e56, #23262c); }
+
+  /* ---------- hint ---------- */
+
+  .hint {
+    flex: none;
+    padding: 8px 14px 12px;
+    text-align: center;
+    color: var(--fg-dim);
+    font-size: 12px;
+  }
+
+  .hint b { color: #b9c0cc; font-weight: 600; }
+</style>
+</head>
+<body>
+
+<div class="bar">
+  <div class="brand"><span class="dot"></span> InsurEthiopia</div>
+
+  <div class="sep"></div>
+
+  <label class="f">Device
+    <select id="device"></select>
+  </label>
+
+  <label class="f">Screen
+    <select id="route"></select>
+  </label>
+
+  <div class="sep"></div>
+
+  <button id="reload" title="Reload the app (R)">Reload</button>
+  <button id="chrome" title="Cycle status bar: dark / light / off">Status bar: dark</button>
+  <button id="newtab" class="ghost" title="Open the current screen in a real browser tab">Open ↗</button>
+
+  <div class="spacer"></div>
+
+  <label class="f">Zoom
+    <select id="zoom">
+      <option value="fit">Fit</option>
+      <option value="1">100%</option>
+      <option value="0.9">90%</option>
+      <option value="0.75">75%</option>
+      <option value="0.6">60%</option>
+      <option value="1.25">125%</option>
+    </select>
+  </label>
+
+  <button id="present" title="Hide all controls for screen sharing (P)">Present <kbd>P</kbd></button>
+</div>
+
+<div class="stage">
+  <div class="scaler" id="scaler">
+    <div class="device" id="deviceEl">
+      <div class="btns">
+        <i class="silent"></i><i class="up"></i><i class="down"></i><i class="power"></i>
+      </div>
+
+      <div class="screen" id="screen">
+        <div class="statusbar">
+          <span id="clock">9:41</span>
+          <span class="icons">
+            <!-- cellular -->
+            <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor" aria-hidden="true">
+              <rect x="0"  y="8"   width="3" height="4"  rx="1"/>
+              <rect x="5"  y="5.5" width="3" height="6.5" rx="1"/>
+              <rect x="10" y="3"   width="3" height="9"  rx="1"/>
+              <rect x="15" y="0"   width="3" height="12" rx="1"/>
+            </svg>
+            <!-- wifi -->
+            <svg width="17" height="12" viewBox="0 0 17 12" fill="currentColor" aria-hidden="true">
+              <path d="M8.5 11.6 6.2 9.1a3.3 3.3 0 0 1 4.6 0l-2.3 2.5Z"/>
+              <path d="M4.5 7.3 3 5.7a8 8 0 0 1 11 0l-1.5 1.6a5.8 5.8 0 0 0-8 0Z"/>
+              <path d="M1.4 4.1 0 2.6a12.4 12.4 0 0 1 17 0l-1.4 1.5a10.3 10.3 0 0 0-14.2 0Z"/>
+            </svg>
+            <!-- battery -->
+            <svg width="27" height="13" viewBox="0 0 27 13" aria-hidden="true">
+              <rect x="0.5" y="0.5" width="23" height="12" rx="3.8" fill="none" stroke="currentColor" stroke-opacity=".45"/>
+              <rect x="2.5" y="2.5" width="17" height="8" rx="2" fill="currentColor"/>
+              <path d="M25.2 4.4v4.2a2.4 2.4 0 0 0 0-4.2Z" fill="currentColor" fill-opacity=".5"/>
+            </svg>
+          </span>
+        </div>
+
+        <div class="island"></div>
+
+        <iframe id="app"
+                title="InsurEthiopia app"
+                src="https://insuruser.circlehq.io/"
+                allow="clipboard-write; camera; geolocation; payment"
+                referrerpolicy="no-referrer-when-downgrade"></iframe>
+
+        <div class="homebar"><i></i></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="hint">
+  Live app in a real iframe — tap, scroll and sign in exactly as on a phone.
+  <b>R</b> reload · <b>P</b> present · <b>Esc</b> exit present
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var ORIGIN = "https://insuruser.circlehq.io";
+
+  var DEVICES = [
+    { id: "16pro",   name: "iPhone 16 Pro",      w: 393, h: 852, radius: 47, bezel: 11, island: true,  statusH: 47, home: true  },
+    { id: "16promax",name: "iPhone 16 Pro Max",  w: 440, h: 956, radius: 53, bezel: 11, island: true,  statusH: 53, home: true  },
+    { id: "13mini",  name: "iPhone 13 mini",     w: 375, h: 812, radius: 42, bezel: 10, island: false, statusH: 44, home: true  },
+    { id: "se",      name: "iPhone SE (3rd gen)",w: 375, h: 667, radius: 20, bezel: 14, island: false, statusH: 20, home: false }
+  ];
+
+  var ROUTES = [
+    ["/",              "Landing"],
+    ["/login",         "Login"],
+    ["/dashboard",     "Dashboard"],
+    ["/products",      "Products"],
+    ["/compare",       "Compare"],
+    ["/policies",      "Policies"],
+    ["/claims",        "Claims"],
+    ["/payments",      "Payments"],
+    ["/documents",     "Documents"],
+    ["/notifications", "Notifications"],
+    ["/profile",       "Profile"],
+    ["/help",          "Help"]
+  ];
+
+  var CHROME_MODES = ["dark", "light", "off"];
+
+  var $ = function (id) { return document.getElementById(id); };
+
+  var deviceSel = $("device"),
+      routeSel  = $("route"),
+      zoomSel   = $("zoom"),
+      screenEl  = $("screen"),
+      deviceEl  = $("deviceEl"),
+      scaler    = $("scaler"),
+      frame     = $("app"),
+      clock     = $("clock");
+
+  var current = DEVICES[0];
+  var chromeIdx = 0;
+
+  DEVICES.forEach(function (d) {
+    var o = document.createElement("option");
+    o.value = d.id;
+    o.textContent = d.name + " · " + d.w + "×" + d.h;
+    deviceSel.appendChild(o);
+  });
+
+  ROUTES.forEach(function (r) {
+    var o = document.createElement("option");
+    o.value = r[0];
+    o.textContent = r[1];
+    routeSel.appendChild(o);
+  });
+
+  function applyDevice(d) {
+    current = d;
+    deviceEl.style.setProperty("--w", d.w + "px");
+    deviceEl.style.setProperty("--h", d.h + "px");
+    deviceEl.style.setProperty("--screen-radius", d.radius + "px");
+    deviceEl.style.setProperty("--bezel", d.bezel + "px");
+    deviceEl.style.setProperty("--status-h", d.statusH + "px");
+    deviceEl.style.setProperty("--home-h", d.home ? "34px" : "0px");
+    screenEl.dataset.island = String(d.island);
+    screenEl.dataset.home = String(d.home);
+    fit();
+  }
+
+  function applyChrome() {
+    var mode = CHROME_MODES[chromeIdx];
+    screenEl.dataset.chrome = mode;
+    $("chrome").textContent = "Status bar: " + mode;
+    $("chrome").classList.toggle("on", mode !== "off");
+    fit();
+  }
+
+  // Scale the whole device so it always fits the visible stage.
+  function fit() {
+    var mode = zoomSel.value;
+    var stage = document.querySelector(".stage");
+    var pad = 36;
+    var fullW = current.w + current.bezel * 2;
+    var fullH = current.h + current.bezel * 2;
+    var scale;
+
+    if (mode === "fit") {
+      scale = Math.min(
+        (stage.clientWidth  - pad) / fullW,
+        (stage.clientHeight - pad) / fullH,
+        1.4
+      );
+    } else {
+      scale = parseFloat(mode);
+    }
+
+    scaler.style.transform = "scale(" + (scale > 0 ? scale : 1) + ")";
+  }
+
+  function go(path) {
+    // Cross-origin: we can't read the iframe's location, only set it.
+    frame.src = ORIGIN + path;
+  }
+
+  function tick() {
+    var now = new Date();
+    var h = now.getHours() % 12 || 12;
+    var m = String(now.getMinutes()).padStart(2, "0");
+    clock.textContent = h + ":" + m;
+  }
+
+  deviceSel.addEventListener("change", function () {
+    var id = deviceSel.value;
+    var d = DEVICES.filter(function (x) { return x.id === id; })[0];
+    if (d) applyDevice(d);
+  });
+
+  routeSel.addEventListener("change", function () { go(routeSel.value); });
+  zoomSel.addEventListener("change", fit);
+  $("reload").addEventListener("click", function () { frame.src = frame.src; });
+  $("chrome").addEventListener("click", function () {
+    chromeIdx = (chromeIdx + 1) % CHROME_MODES.length;
+    applyChrome();
+  });
+  $("newtab").addEventListener("click", function () {
+    window.open(ORIGIN + routeSel.value, "_blank", "noopener");
+  });
+  $("present").addEventListener("click", function () {
+    document.body.classList.toggle("present");
+    setTimeout(fit, 0);
+  });
+
+  document.addEventListener("keydown", function (e) {
+    var typing = /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName);
+    if (typing || e.metaKey || e.ctrlKey || e.altKey) return;
+
+    var k = e.key.toLowerCase();
+    if (k === "r") { frame.src = frame.src; }
+    else if (k === "p") { document.body.classList.toggle("present"); setTimeout(fit, 0); }
+    else if (e.key === "Escape") { document.body.classList.remove("present"); setTimeout(fit, 0); }
+  });
+
+  window.addEventListener("resize", fit);
+
+  applyDevice(DEVICES[0]);
+  applyChrome();
+  tick();
+  setInterval(tick, 15000);
+})();
+</script>
+</body>
+</html>
