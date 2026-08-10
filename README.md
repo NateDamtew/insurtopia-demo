@@ -12,6 +12,21 @@ telebirr mini-app.
 
 Both are single self-contained HTML files. Open them directly, or view the hosted versions.
 
+## On a phone
+
+Open the link on a phone and the device frame is dropped — the screenshot fills the
+screen, so it simply looks like the app. The toolbar is replaced by a small **⋯** button
+in the corner (back to home, reload, highlight toggle, open app in a new tab).
+
+The screen is letterboxed to the screenshot's 414×896 aspect, which keeps the tile
+aligned on any handset. On iOS you can also **Share → Add to Home Screen** to launch it
+without browser chrome.
+
+> **iOS note:** Safari blocks storage for sites embedded in a frame, so signing in to the
+> app *inside* the mini-app view may fail on iPhone. Use **⋯ → Open app in new tab**,
+> which loads it first-party where sign-in works normally. On Android Chrome the embedded
+> sign-in works as-is.
+
 ## Using them in a pitch
 
 - **`P`** — present mode, hides every control so only the phone is on screen

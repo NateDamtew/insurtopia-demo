@@ -2,7 +2,15 @@
 <html lang="en">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#000000" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black" />
+<meta name="apple-mobile-web-app-title" content="InsurEthiopia" />
+<meta name="description" content="Concept demo: InsurEthiopia as a telebirr mini-app. Tap the tile to open the live app." />
+<meta property="og:type" content="website" />
+<meta property="og:title" content="telebirr × InsurEthiopia — Mini-App Concept" />
+<meta property="og:description" content="An InsurEthiopia tile in the telebirr home grid. Tap it and the live app opens as a mini-app." />
 <title>telebirr × InsurEthiopia — Mini-App Concept</title>
 <style>
   :root {
@@ -22,6 +30,7 @@
 
   * { box-sizing: border-box; }
   html, body { height: 100%; margin: 0; }
+  @supports (height: 100dvh) { html, body { height: 100dvh; } }
 
   body {
     background:
@@ -32,6 +41,7 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    overscroll-behavior: none;
   }
 
   body.present { background: #000; }
@@ -82,8 +92,17 @@
 
   /* ---------------- stage + device ---------------- */
 
-  .stage { flex: 1 1 auto; display: grid; place-items: center; min-height: 0; padding: 16px; }
-  .scaler { transform-origin: center center; will-change: transform; }
+  .stage { flex: 1 1 auto; position: relative; min-height: 0; padding: 16px; overflow: hidden; }
+
+  /* absolute centring — grid/flex centring clamps an over-sized child to the
+     start edge, which shifts and clips the phone once it's scaled down */
+  .scaler {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform-origin: center center;
+    will-change: transform;
+  }
 
   .device {
     position: relative;
@@ -276,6 +295,122 @@
   .hint { flex: none; padding: 8px 14px 12px; text-align: center; color: var(--fg-dim); font-size: 12px; }
   .hint b { color: #b9c0cc; font-weight: 600; }
 
+  /* ---------------- mobile ---------------- */
+
+  .mobile-ui { display: none; }
+
+  body.mobile {
+    position: fixed;
+    inset: 0;
+    background: #000;
+  }
+  body.mobile .bar,
+  body.mobile .hint { display: none; }
+  body.mobile .stage { padding: 0; }
+
+  /* a phone frame inside a real phone is silly — drop it and go full-bleed */
+  body.mobile .device {
+    padding: 0;
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+  }
+  body.mobile .btns,
+  body.mobile .notch,
+  body.mobile .homebar { display: none; }
+  body.mobile .screen { border-radius: 0; }
+
+  body.mobile .mobile-ui { display: block; }
+
+  .fab {
+    position: fixed;
+    z-index: 60;
+    right: calc(12px + env(safe-area-inset-right));
+    bottom: calc(12px + env(safe-area-inset-bottom));
+    width: 44px; height: 44px;
+    display: grid; place-items: center;
+    border: 0;
+    border-radius: 50%;
+    background: rgba(18,20,24,.72);
+    backdrop-filter: blur(10px);
+    color: #fff;
+    box-shadow: 0 4px 16px rgba(0,0,0,.45), inset 0 0 0 1px rgba(255,255,255,.16);
+    cursor: pointer;
+    opacity: .55;
+    transition: opacity .2s ease, transform .2s ease;
+    touch-action: manipulation;
+  }
+  .fab:active { transform: scale(.93); }
+  body.sheet-open .fab { opacity: 1; }
+
+  .sheet {
+    position: fixed;
+    z-index: 59;
+    right: calc(12px + env(safe-area-inset-right));
+    bottom: calc(66px + env(safe-area-inset-bottom));
+    width: min(268px, calc(100vw - 24px));
+    padding: 8px;
+    border-radius: 16px;
+    background: rgba(20,22,27,.94);
+    backdrop-filter: blur(16px);
+    box-shadow: 0 12px 40px rgba(0,0,0,.6), inset 0 0 0 1px rgba(255,255,255,.14);
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    transform-origin: bottom right;
+    transition: opacity .18s ease, transform .18s ease;
+  }
+  .sheet[hidden] { display: none; }
+  body:not(.sheet-open) .sheet { opacity: 0; transform: scale(.9); pointer-events: none; }
+
+  .sheet button {
+    all: unset;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 11px 12px;
+    border-radius: 10px;
+    font-size: 14.5px;
+    color: #e9ecf1;
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+  .sheet button:active { background: rgba(255,255,255,.10); }
+  .sheet button .st { font-size: 12px; color: var(--fg-dim); }
+  .sheet button.on .st { color: var(--ins); }
+
+  .sheet .note {
+    margin: 4px 6px 2px;
+    font-size: 11.5px;
+    line-height: 1.4;
+    color: #7f8794;
+    border-top: 1px solid rgba(255,255,255,.10);
+    padding-top: 8px;
+  }
+
+  /* one-shot coach mark */
+  .toast {
+    position: fixed;
+    z-index: 58;
+    left: 50%;
+    bottom: calc(24px + env(safe-area-inset-bottom));
+    transform: translateX(-50%);
+    padding: 9px 15px;
+    border-radius: 999px;
+    background: rgba(18,20,24,.85);
+    backdrop-filter: blur(10px);
+    color: #fff;
+    font-size: 13px;
+    box-shadow: 0 6px 22px rgba(0,0,0,.5), inset 0 0 0 1px rgba(255,255,255,.14);
+    transition: opacity .5s ease;
+    pointer-events: none;
+  }
+  .toast.gone { opacity: 0; }
+  body.open .toast { opacity: 0; }
+
+  .tile { touch-action: manipulation; }
+
   @media (prefers-reduced-motion: reduce) {
     .home, .mini, .tile { transition: none; }
     body.pulse .tile::after { animation: none; }
@@ -372,6 +507,27 @@
   <b>Esc</b> closes · <b>P</b> present · <b>R</b> reload
 </div>
 
+<div class="mobile-ui">
+  <div class="toast" id="toast">Tap the InsurEthiopia tile</div>
+
+  <div class="sheet" id="sheet" hidden>
+    <button data-act="home">Back to home screen</button>
+    <button data-act="reload">Reload app</button>
+    <button data-act="pulse" id="mPulse">Highlight tile <span class="st">On</span></button>
+    <button data-act="newtab">Open app in new tab</button>
+    <p class="note">
+      Sign-in not working? iOS blocks storage for sites embedded in a frame.
+      Use <b>Open app in new tab</b> to sign in normally.
+    </p>
+  </div>
+
+  <button class="fab" id="fab" aria-label="Demo controls" aria-expanded="false">
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+      <circle cx="4" cy="10" r="1.8"/><circle cx="10" cy="10" r="1.8"/><circle cx="16" cy="10" r="1.8"/>
+    </svg>
+  </button>
+</div>
+
 <script>
 (function () {
   "use strict";
@@ -428,20 +584,76 @@
     setTimeout(fit, 0);
   });
 
-  // scale the device to fit the stage
+  // ---- layout -------------------------------------------------------------
+  // Below this width the device frame is dropped and the screen fills the
+  // viewport, so on a real phone the demo simply looks like the app.
+  var MOBILE_MAX = 900;
   var zoom = $("zoom");
+
   function fit() {
+    var mobile = window.innerWidth < MOBILE_MAX;
+    body.classList.toggle("mobile", mobile);
+
     var stage = document.querySelector(".stage");
-    var fullW = 414 + 22, fullH = 896 + 22, pad = 32, s;
-    if (zoom.value === "fit") {
-      s = Math.min((stage.clientWidth - pad) / fullW, (stage.clientHeight - pad) / fullH, 1.35);
+    var bezel = mobile ? 0 : 11;                 // must match --bezel
+    var fullW = 414 + bezel * 2, fullH = 896 + bezel * 2;
+    var s;
+
+    if (mobile) {
+      // letterbox: keep the screenshot's aspect so the tile stays aligned
+      s = Math.min(stage.clientWidth / fullW, stage.clientHeight / fullH);
+    } else if (zoom.value === "fit") {
+      s = Math.min((stage.clientWidth - 32) / fullW, (stage.clientHeight - 32) / fullH, 1.35);
     } else {
       s = parseFloat(zoom.value);
     }
-    scaler.style.transform = "scale(" + (s > 0 ? s : 1) + ")";
+
+    scaler.style.transform = "translate(-50%, -50%) scale(" + (s > 0 ? s : 1) + ")";
   }
+
   zoom.addEventListener("change", fit);
   window.addEventListener("resize", fit);
+  window.addEventListener("orientationchange", function () { setTimeout(fit, 120); });
+  if (window.visualViewport) window.visualViewport.addEventListener("resize", fit);
+
+  // ---- mobile controls ----------------------------------------------------
+  var sheet = $("sheet"), fab = $("fab"), toast = $("toast");
+
+  function setSheet(open) {
+    body.classList.toggle("sheet-open", open);
+    fab.setAttribute("aria-expanded", String(open));
+    if (open) sheet.hidden = false;
+  }
+
+  fab.addEventListener("click", function (e) {
+    e.stopPropagation();
+    setSheet(!body.classList.contains("sheet-open"));
+  });
+
+  sheet.addEventListener("click", function (e) {
+    var btn = e.target.closest("button[data-act]");
+    if (!btn) return;
+    var act = btn.dataset.act;
+
+    if (act === "home") { close(); setSheet(false); }
+    else if (act === "reload") { reload(); setSheet(false); }
+    else if (act === "newtab") { window.open(ORIGIN + "/", "_blank", "noopener"); setSheet(false); }
+    else if (act === "pulse") {
+      var on = body.classList.toggle("pulse");
+      btn.querySelector(".st").textContent = on ? "On" : "Off";
+      btn.classList.toggle("on", on);
+      $("pulse").classList.toggle("on", on);
+    }
+  });
+
+  document.addEventListener("click", function (e) {
+    if (body.classList.contains("sheet-open") && !sheet.contains(e.target) && e.target !== fab) {
+      setSheet(false);
+    }
+  });
+
+  // coach mark, once, and only while the home screen is showing
+  setTimeout(function () { toast.classList.add("gone"); }, 4200);
 
   document.addEventListener("keydown", function (e) {
     if (/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName) || e.metaKey || e.ctrlKey || e.altKey) return;
