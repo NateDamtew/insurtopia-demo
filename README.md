@@ -27,12 +27,35 @@ without browser chrome.
 > which loads it first-party where sign-in works normally. On Android Chrome the embedded
 > sign-in works as-is.
 
+## The script
+
+`index.html` runs as a stepped walkthrough. The left panel says what's on screen, the
+right panel carries the talking points and the action to take, and the dots at the bottom
+move between steps.
+
+Each step can also drive the demo — open the mini-app, jump to a given screen — so the
+notes and the phone stay in sync. The page can't read the app (different domain), so
+steps *drive* it rather than follow it. If you'd rather tap through by hand, switch
+**Sync screens** off and the steps become notes only.
+
+**The copy is a starting point — rewrite it.** It lives in one array called `STEPS` near
+the top of the `<script>` in `index.html`, with a comment explaining each field. Nothing
+else needs touching to change the narrative.
+
+> Because steps jump straight to app screens, **sign in once at the start**. The session
+> is kept in `localStorage`, so every later step lands on a real screen instead of the
+> login page.
+
 ## Using them in a pitch
 
-- **`P`** — present mode, hides every control so only the phone is on screen
+- **`→` / `space`** — next step · **`←`** — previous · **`Home`** — back to step 1
+- **`P`** — present mode: drops the toolbar but keeps the notes, step dots and logo
 - **`Esc`** — close the mini-app / exit present mode
-- **`R`** — reload the embedded app
+- **`R`** — reload the current screen
+- **Notes** hides the side panels and gives the phone the full stage
 - Turn off **Highlight tile** before you tap, so the pulsing ring doesn't distract
+
+Panels need room, so they hide automatically below 1180px wide and on phones.
 
 The embedded app loads as soon as the page opens, so the mini-app is already painted
 by the time you tap the tile — no white flash in front of an audience.
