@@ -114,12 +114,15 @@
     flex: 1 1 auto;
     display: flex;
     align-items: stretch;
-    gap: 20px;
+    justify-content: center;      /* keep the cluster together, centred */
+    gap: 26px;
     min-height: 0;
     padding: 16px 20px;
   }
 
-  .phone-area { position: relative; flex: 1 1 auto; min-width: 0; overflow: hidden; }
+  /* width is set from JS to the phone's actual scaled width, so the panels sit
+     right next to it instead of being pushed out to the edges */
+  .phone-area { position: relative; flex: 0 0 auto; min-width: 0; overflow: hidden; }
 
   /* absolute centring — grid/flex centring clamps an over-sized child to the
      start edge, which shifts and clips the phone once it's scaled down */
@@ -473,6 +476,10 @@
   body.mobile .panel,
   body.mobile .stepbar { display: none; }
   body.mobile .stage { padding: 0; gap: 0; }
+
+  /* the column is content-sized on desktop; on mobile nothing sizes it (the
+     scaler is absolutely positioned), so it has to fill the stage instead */
+  body.mobile .phone-area { flex: 1 1 auto; }
 
   /* a phone frame inside a real phone is silly — drop it and go full-bleed */
   body.mobile .device {
@@ -907,26 +914,42 @@
   // Below this width the device frame is dropped and the screen fills the
   // viewport, so on a real phone the demo simply looks like the app.
   var MOBILE_MAX = 900;
+  var GAP = 26;      // must match .stage gap
+  var PAD_X = 20;    // must match .stage horizontal padding
   var zoom = $("zoom");
 
   function fit() {
     var mobile = window.innerWidth < MOBILE_MAX;
     body.classList.toggle("mobile", mobile);
 
-    // measured on the phone column, so the panels shrink the phone rather
-    // than push it off-centre
     var area = $("phoneArea");
+    var stageEl = document.querySelector(".stage");
     var bezel = mobile ? 0 : 11;                 // must match --bezel
     var fullW = 414 + bezel * 2, fullH = 896 + bezel * 2;
     var s;
 
     if (mobile) {
+      area.style.width = "";
       // letterbox: keep the screenshot's aspect so the tile stays aligned
       s = Math.min(area.clientWidth / fullW, area.clientHeight / fullH);
-    } else if (zoom.value === "fit") {
-      s = Math.min((area.clientWidth - 16) / fullW, (area.clientHeight - 16) / fullH, 1.35);
     } else {
-      s = parseFloat(zoom.value);
+      // Work out the space left over once the panels have taken theirs, then
+      // size the phone column to the result — measuring the column itself
+      // would be circular, since we're about to set its width.
+      var panelW = 0;
+      var pl = $("panelL");
+      if (getComputedStyle(pl).display !== "none") {
+        panelW = pl.offsetWidth + $("panelR").offsetWidth + GAP * 2;
+      }
+      var availW = stageEl.clientWidth - PAD_X * 2 - panelW - 8;
+      var availH = area.clientHeight - 16;
+
+      s = zoom.value === "fit"
+        ? Math.min(availW / fullW, availH / fullH, 1.35)
+        : parseFloat(zoom.value);
+
+      if (!(s > 0)) s = 1;
+      area.style.width = Math.ceil(fullW * s) + "px";
     }
 
     scaler.style.transform = "translate(-50%, -50%) scale(" + (s > 0 ? s : 1) + ")";
