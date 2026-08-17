@@ -37,6 +37,10 @@ without browser chrome.
 The embedded app loads as soon as the page opens, so the mini-app is already painted
 by the time you tap the tile — no white flash in front of an audience.
 
+The stage is styled in the D'Afrique brand teal `#1C4B42`, with the logo in the
+bottom-right corner. Present mode keeps the logo and drops everything else, so a
+projected screen shows just the phone on brand colour.
+
 Use **Chrome or Edge**. Safari's tracking prevention can drop the app's session inside a
 third-party iframe and sign you out mid-demo.
 
